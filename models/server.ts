@@ -3,6 +3,7 @@ import cors from "cors";
 
 //
 import userRoutes from "../routes/user-routes";
+import sequelize from "../database/connection";
 
 class Server {
 	private app: Application;
@@ -17,6 +18,17 @@ class Server {
 		this.middleware();
 		//Connect to routes
 		this.routes();
+		//Connect to database
+		this.database();
+	}
+
+	async database() {
+		try {
+			await sequelize.authenticate();
+			console.log("Database Up.");
+		} catch (error: any) {
+			throw new Error(error);
+		}
 	}
 
 	middleware() {

@@ -1,33 +1,74 @@
-import { Request, Response } from "express";
+import { Request, response, Response } from "express";
+import User from "../models/user";
 
-export const getUsers = (req: Request, res: Response) => {
-	res.status(400).json({
+export const getUsers = async (req: Request, res: Response) => {
+	const users = await User.findAll();
+	res.json({
 		msg: "getUsers",
+		users,
 	});
 };
 
-export const getUser = (req: Request, res: Response) => {
+export const getUser = async (req: Request, res: Response) => {
 	const { id } = req.params;
-	res.status(400).json({
-		msg: "getUser",
-		id,
-	});
+
+	const user = await User.findByPk(id);
+	if (user) {
+		res.json({
+			msg: "getUser",
+			user,
+		});
+	} else {
+		res.status(404).json({ msg: "Not user found." });
+	}
 };
 
-export const postUser = (req: Request, res: Response) => {
+export const postUser = async (req: Request, res: Response) => {
 	const { body } = req;
 
-	res.json({ msg: "Post User", body });
+	try {
+		const { name, email } = body;
+		const data = { name, email };
+
+		await User.create(data, { ignoreDuplicates: false }).then((user) => {
+			return res.json({ msg: "Post User", user });
+		});
+	} catch (error: any) {
+		console.log(error);
+		return res.status(500).json({ msg: "Talk to an administrator." });
+	}
 };
 
-export const putUser = (req: Request, res: Response) => {
+export const putUser = async (req: Request, res: Response) => {
 	const { id } = req.params;
-	const { body } = req;
+	const { name, email } = req.body;
 
-	res.json({ msg: "Put User", id, body });
+	try {
+		const user = await User.findByPk(id);
+		if (!user) {
+			res.status(400).json({ msg: "No user detected with id: " + id });
+		} else {
+			await user.update({ name, email });
+			res.json({ msg: "PutUser", user });
+		}
+	} catch (error: any) {
+		console.log(error);
+		return res.status(500).json({ msg: "Talk to an administrator." });
+	}
 };
 
-export const deleteUser = (req: Request, res: Response) => {
+export const deleteUser = async (req: Request, res: Response) => {
 	const { id } = req.params;
-	res.json({ msg: "Delete User.", id });
+	try {
+		const user = await User.findByPk(id);
+		if (!user) {
+			res.status(400).json({ msg: "No user detected with id: " + id });
+		} else {
+			await user.update({ state: 0 });
+			res.json({ msg: "Delete User.", user });
+		}
+	} catch (error: any) {
+		console.log(error);
+		return res.status(500).json({ msg: "Talk to an administrator." });
+	}
 };
